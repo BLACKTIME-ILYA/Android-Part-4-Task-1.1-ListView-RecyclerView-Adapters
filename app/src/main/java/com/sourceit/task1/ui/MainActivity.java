@@ -1,17 +1,12 @@
 package com.sourceit.task1.ui;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import com.sourceit.task1.R;
 import com.sourceit.task1.model.Contact;
@@ -24,11 +19,10 @@ public class MainActivity extends AppCompatActivity {
     private final int DEFAULT = 20;
     private final int ADD_ONE = 1;
 
-    private ArrayAdapter<Contact> adapter;
     private ArrayList<Contact> contacts;
     private int numberOfContact;
 
-    private ListView contact_list;
+    private RecyclerView contact_list;
     private Button add;
 
     @Override
@@ -38,22 +32,23 @@ public class MainActivity extends AppCompatActivity {
 
         init();
 
-        addContacts(DEFAULT);
+        if (savedInstanceState == null) addContacts(DEFAULT);
+        else addContacts(savedInstanceState.getInt("contactsSize"));
 
-        adapter = new MyAdapter(this, contacts);
-        contact_list.setAdapter(adapter);
-        contact_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        contact_list.setLayoutManager(layoutManager);
+        contact_list.setAdapter(new RecyclerViewAdapter(contacts, new OnItemClickWatcher<Contact>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(View v, int position, Contact item) {
                 openInformation(position);
             }
-        });
+        }));
 
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 addContacts(ADD_ONE);
-                adapter.notifyDataSetChanged();
+                contact_list.getAdapter().notifyDataSetChanged();
             }
         });
     }
@@ -67,44 +62,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-        contact_list = (ListView) findViewById(R.id.contact_list);
+        contact_list = (RecyclerView) findViewById(R.id.contact_list);
         add = (Button) findViewById(R.id.button_add);
         contacts = new ArrayList<>();
-    }
-
-    private class MyAdapter extends ArrayAdapter<Contact> {
-        public MyAdapter(Context context, ArrayList<Contact> objects) {
-            super(context, R.layout.contact, objects);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
-            View rowView = convertView;
-
-            if (rowView == null) {
-                rowView = getLayoutInflater().inflate(R.layout.contact, parent, false);
-                holder = new ViewHolder();
-                holder.name = (TextView) rowView.findViewById(R.id.contact_name);
-                holder.email = (TextView) rowView.findViewById(R.id.contact_email);
-                holder.image = (ImageView) rowView.findViewById(R.id.contact_icon);
-                rowView.setTag(holder);
-                L.d("row set Tag...");
-            } else holder = (ViewHolder) rowView.getTag();
-
-            Contact contact = getItem(position);
-            holder.name.setText(contact.getName());
-            holder.email.setText(contact.getEmail());
-            holder.image.setImageResource(contact.getImage());
-
-            return rowView;
-        }
-
-        class ViewHolder {
-            public TextView name;
-            public TextView email;
-            public ImageView image;
-        }
     }
 
     private void openInformation(int position) {
@@ -115,5 +75,10 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("adress", contact_temp.getAdress());
         intent.putExtra("image", contact_temp.getImage());
         startActivity(intent);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt("contactsSize", contacts.size());
     }
 }
