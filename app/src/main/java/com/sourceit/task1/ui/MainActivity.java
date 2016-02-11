@@ -38,7 +38,9 @@ public class MainActivity extends AppCompatActivity {
 
         init();
 
-        addContacts(DEFAULT);
+        if (savedInstanceState == null)
+            addContacts(DEFAULT);
+        else addContacts(savedInstanceState.getInt("contactsSize"));
 
         adapter = new MyAdapter(this, contacts);
         contact_list.setAdapter(adapter);
@@ -115,5 +117,10 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("adress", contact_temp.getAdress());
         intent.putExtra("image", contact_temp.getImage());
         startActivity(intent);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt("contactsSize", contacts.size());
     }
 }
